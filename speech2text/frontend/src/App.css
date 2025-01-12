@@ -1,0 +1,82 @@
+/* App.css */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Arial', sans-serif;
+}
+
+body {
+  background-color: #f8f9fa; /* Light background color */
+  height: 100vh; /* Full height for body */
+  display: flex; /* Use flexbox for centering */
+  align-items: center; /* Center vertically */
+  justify-content: center; /* Center horizontally */
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%; /* Full width for responsiveness */
+  max-width: 500px; /* Maximum width for the container */
+  padding: 20px;
+  text-align: center; /* Center align text */
+  border-radius: 15px; /* Slightly rounded corners */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+  background-color: #ffffff; /* White background for container */
+}
+
+h1 {
+  font-size: 2.5rem; /* Increased heading size */
+  margin-bottom: 20px;
+  color: #343a40; /* Darker text for contrast */
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 12px 15px;
+  font-size: 16px;
+  border: 2px solid #ced4da; /* Light gray border */
+  border-radius: 10px; /* More rounded corners */
+  outline: none;
+  transition: border-color 0.3s, box-shadow 0.3s; /* Added transition for shadow */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow effect */
+  background-color: #ffffff; /* White background for input */
+  color :black;
+}
+
+input[type="text"]:focus {
+  border-color: #007bff; /* Blue border on focus */
+  box-shadow: 0 0 8px rgba(0, 123, 255, 0.5); /* Shadow effect on focus */
+}
+
+button {
+  padding: 12px 20px;
+  font-size: 16px;
+  color: white;
+  background-color: #007bff; /* Blue background */
+  border: none;
+  border-radius: 10px; /* More rounded corners */
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s; /* Added transform on hover */
+  margin-top: 10px; /* Margin for spacing */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow effect */
+}
+
+button:hover {
+  background-color: #0056b3; /* Darker blue on hover */
+  transform: translateY(-2px); /* Slight lift effect on hover */
+}
+
+p {
+  margin-top: 10px;
+  font-size: 14px;
+  color: red; /* Error message color */
+}
+
+p[style*="color: blue"] {
+  color: blue; /* Listening message color */
+}
