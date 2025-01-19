@@ -1,0 +1,23 @@
+datasource db {
+  provider = "postgres"
+  url      = "postgresql://dev:dev@localhost:5432/chatbot"
+}
+
+generator client {
+  provider             = "prisma-client-py"
+  recursive_type_depth = 5
+}
+
+model Ticket {
+  id            String   @id @default(uuid())
+  quantity      Int
+  creation_time DateTime
+  expiry_time   DateTime
+  person_in     Int      @default(0)
+  person_out    Int      @default(0)
+}
+
+model Order {
+  order_id String @unique
+  quantity Int
+}
