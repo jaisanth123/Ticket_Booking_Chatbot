@@ -572,12 +572,12 @@ function App() {
                 disabled = {disableInput}
                 value={inputBox}
                 placeholder="Enter your message"
-                className="ml-2 rounded-lg w-auto px-3 h-10 flex items-center justify-center hover:bg-[#94a3b8] bg-[#3f3f46] text-[#d4d4d8] shadow-lg transition-colors duration-300 ease-in-out"
+                className="ml-2 rounded-lg w-auto px-3 h-10 flex items-center justify-center  bg-[#3f3f46] text-[#d4d4d8] shadow-lg transition-colors duration-300 ease-in-out"
                 />
               <button
                 type="button"
                 onClick={handleSpeech}
-                className="ml-2 rounded-lg w-auto px-3 h-10 flex items-center justify-center hover:bg-[#94a3b8] bg-[#3f3f46] text-[#d4d4d8] shadow-lg transition-colors duration-300 ease-in-out"
+                className="ml-2 rounded-lg w-auto px-3 h-10 flex items-center justify-center  bg-[#3f3f46] text-[#d4d4d8] shadow-lg transition-colors duration-300 ease-in-out"
                 >
 
                 <FontAwesomeIcon icon={faMicrophone} color="#d4d4d8" />

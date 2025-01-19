@@ -1,5 +1,8 @@
 import re
+from word2number import w2n
+
 from routes.chatbot_helper.ticket_helper import museumStrength, create_order
+
 
 async def customResponse(user_state, user_states, user_id, message):
     # Set default state if not available
@@ -95,10 +98,14 @@ async def customResponse(user_state, user_states, user_id, message):
             return {'user': 'bot', 'type': 'message', 'message': "Booking has been cancelled."}
 
         try:
-            no_of_tickets = int(message)
+            if isinstance(message, str):
+                no_of_tickets = w2n.word_to_num(message)
+        
+            else:
+                no_of_tickets = int(message)
+
             if no_of_tickets <= 0:
                 raise ValueError
-
             response = await museumStrength(no_of_tickets, 600)
             if response:
                 # Proceed to payment confirmation
