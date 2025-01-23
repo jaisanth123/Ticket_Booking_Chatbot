@@ -170,7 +170,7 @@ const DownloadTicket = ({ pdfBase64 }) => {
       onClick={handleDownload}
       className="mr-auto ml-2 text-left rounded-lg p-2 flex flex-row items-center justify-start bg-[#334155] text-white" 
     >
-      <div className="text-base mr-2 font-light">Ticket.pdf</div>
+      <div className="mr-2 text-base font-light">Ticket.pdf</div>
       <FontAwesomeIcon icon={faFileDownload} color="white" />
     </button>
   );
@@ -281,7 +281,6 @@ function App() {
       setListening(false); // Set listening to false after the process is done
     }
   };
-
   return (
     <><nav class="bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-700">
         <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
@@ -437,7 +436,7 @@ function App() {
         </div>
       </div>
       <button
-        className="fixed right-2 bottom-4 m-2 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600 rounded-full w-14 h-14 flex items-center justify-center shadow-lg"
+        className="fixed flex items-center justify-center m-2 rounded-full shadow-lg right-2 bottom-4 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600 w-14 h-14"
         onClick={() => setVisible((prevVisible) => !prevVisible)}
       >
         <FontAwesomeIcon icon={faMessage} color="white" />
@@ -445,7 +444,7 @@ function App() {
       {visible && (
         <div className="fixed bg-gradient-to-b from-[#1a003a] to-black sm:right-[2vw] sm:bottom-[12vh] h-[80vh] sm:w-[30vw] w-[90vw] rounded-xl bottom-[11vh] right-4 shadow-2xl border border-gray-700">
           <div className="h-[8vh] bg-[#0f172a] rounded-t-xl flex items-center justify-center shadow-md">
-            <div className="text-white text-2xl font-bold">Museum Chatbot</div>
+            <div className="text-2xl font-bold text-white">Museum Chatbot</div>
           </div>
           <div className="h-[72vh] flex-grow rounded-b-xl grid bg-white">
             <div className="overflow-y-auto h-[65vh] flex flex-col p-2 space-y-2">
@@ -479,7 +478,7 @@ function App() {
               })}
               {/* Display the "Listening..." message when listening is true */}
               {listening && (
-                <div className="bg-gray-200 p-2 rounded-lg text-black">
+                <div className="p-2 text-black bg-gray-200 rounded-lg">
                   Listening...
                 </div>
               )}
@@ -492,7 +491,7 @@ function App() {
                 disabled = {disableInput}
                 value={input}
                 placeholder="Enter your message"
-                className="p-2 flex-grow rounded-lg border border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black"
+                className="flex-grow p-2 text-white placeholder-gray-400 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
               />
               {/* Microphone button */}
               <button
