@@ -2,8 +2,9 @@ import "./App.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMicrophone } from '@fortawesome/free-solid-svg-icons';
 import { faPlayCircle } from '@fortawesome/free-solid-svg-icons'; // Play icon
-
-
+import { useSpeechRecognition } from 'react-speech-recognition';
+import SpeechRecognition from 'react-speech-recognition'; // Add this import
+import { faPlay, faPause } from '@fortawesome/free-solid-svg-icons';
 import {
   faMessage,
   faFileDownload,
@@ -104,14 +105,17 @@ const PaymentMessageBubble = ({ order_id, setMessages }) => {
 
 const BotMessageBubble = ({ message, isTamil,isSpeak,setIsTamil,setIsSpeak }) => {
   const [translatedMessage, setTranslatedMessage] = useState(null);
-
+  const [audioInstance, setAudioInstance] = useState(null); // Add state to keep track of audio instance
+  const [isPlaying, setIsPlaying] = useState(false); // Add state to keep track of play/pause status
+  const [playbackPosition, setPlaybackPosition] = useState(0); 
   useEffect(() => {
     const translateMessage = async () => {
       if (isTamil) {
         try {
-          // Send the message to the backend to translate it to Tamil
+          // Send the message to the ba
+          // ckend to translate it to Tamil
           const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/translate-to-tamil?input_text=${message}`);
-
+          console.log("ehllo");
           // If translation is successful, set translated message
           if (response.data.translated_tamil) {
             setTranslatedMessage(response.data.translated_tamil);
@@ -132,26 +136,58 @@ const BotMessageBubble = ({ message, isTamil,isSpeak,setIsTamil,setIsSpeak }) =>
 
     translateMessage();
   }, [message]); // Re-run the effect when message or isTamil changes
-  const handlePlay = () => {
-    const msg = translatedMessage || message;
-    const language = isSpeak ? 'ta' : 'en'; // Detect language, 'ta' for Tamil, 'en' for English
-    console.log(language);
-    if (window.speechSynthesis) {
-      const utterance = new SpeechSynthesisUtterance(msg);
-      utterance.lang = language; // Set language based on detected language
-      window.speechSynthesis.speak(utterance);
-      setIsSpeak(false); // Speak the message
+ 
+  const handlePlayPause = async () => {
+    if (isPlaying && audioInstance) {
+      setPlaybackPosition(audioInstance.currentTime); // Track the current playback position
+      audioInstance.pause();
+      setIsPlaying(false);
+    } else {
+      const msg = translatedMessage || message;
+      const lang = isSpeak ? 'ta' : 'en';
+
+      try {
+        const formData = new FormData();
+        formData.append('text', msg);
+        formData.append('lang', lang);
+
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/speak`, formData);
+        const audioBase64 = response.data.audio;
+
+        // Create a Blob from the base64-encoded audio string
+        const audioBlob = new Blob([Uint8Array.from(atob(audioBase64), c => c.charCodeAt(0))], { type: 'audio/mp3' });
+
+        // Create a URL for the Blob and play the audio
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        audio.currentTime = playbackPosition; // Resume playback from the previous position
+        audio.play();
+
+        // Update state with the current audio instance
+        setAudioInstance(audio);
+        setIsPlaying(true);
+
+        audio.onended = () => {
+          setIsPlaying(false); // Reset play status when audio ends
+        };
+      } catch (error) {
+        console.error('Error playing audio:', error);
+      }
+
+      setIsSpeak(false); // Reset speak mode
     }
   };
+
   return (
     <div>
       <div className="ml-5 font-medium text-white">Assistant</div>
       <pre className="bg-[#334155] text-white m-3 font-sans rounded-t-3xl rounded-br-3xl p-3 text-wrap shadow-lg max-w-[70%] bubble">
         <p>{translatedMessage || message}</p> {/* Display translated message if available, else the original message */}
       </pre>
-      <button onClick={handlePlay} className="play-btn">
-        <FontAwesomeIcon icon={faPlayCircle} size="2x" color="white" />
+      <button onClick={handlePlayPause} className="play-btn">
+      <FontAwesomeIcon icon={isPlaying ? faPause : faPlay} size="xl" color="white" ba />
       </button>
+      
     </div>
   );
 };
@@ -302,56 +338,109 @@ function App() {
     }
   };
 
+  const [response, setResponse] = useState('');
+  const { transcript, resetTranscript,browserSupportsSpeechRecognition } = useSpeechRecognition(); 
   const [listening, setListening] = useState(false);
   const [tamilListening, setTamilListening] = useState(false);
+  const [timeoutId, setTimeoutId] = useState(null);
+  const [listeningLanguage, setListeningLanguage] = useState('');
 
-  // Function to handle voice input
-  const handleSpeech = async () => {
-    setListening(true);
-
-    try {
-      // Send a GET request to the Flask backend for voice input
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/voice`);
-      
-      // If recognized text is returned, update the input state
-      if (response.data.text) {
-        setInputBox(response.data.text);
-        setInput(response.data.text); // Update input state with recognized text
-      } else if (response.data.error) {
-        console.error(response.data.error);
+    const startEnglishListening = () => {
+      resetTranscript();
+      setListening(true);
+        setIsTamil(false);  // Make sure we're not in Tamil mode
+      setListeningLanguage('en-US'); // Set listening language
+      SpeechRecognition.startListening({ continuous: false, language: 'en-US' });
+      const validateUrl = `${import.meta.env.VITE_BACKEND_URL}/voice`;
+      console.log(`Validate URL for English: ${validateUrl}`);
+      resetInactivityTimer();
+    };
+    
+    const startTamilListening = () => {
+      resetTranscript();
+      setTamilListening(true);
+      setIsTamil(true);  // Set Tamil mode
+      setIsSpeak(true);  // Set speak mode
+      setListeningLanguage('ta-IN'); // Set listening language
+      SpeechRecognition.startListening({ continuous: true, language: 'ta-IN' });
+      const validateUrlTamil = `${import.meta.env.VITE_BACKEND_URL}/tamil-voice`;
+      console.log(`Validate URL for Tamil: ${validateUrlTamil}`);
+      resetInactivityTimer();
+    };
+    
+    const resetInactivityTimer = () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
       }
-    } catch (error) {
-      console.error('Error while fetching voice input:', error);
-    } finally {
-      setListening(false);
-      setIsTamil(false); // Set listening to true when the microphone button is clicked
-      // Set listening to false after the process is done
-    }
-  };
-  const handleTamilSpeech = async () => {
-    setTamilListening(true); 
-    setIsTamil(true);
-    setIsSpeak(true);// Set listening to true when the microphone button is clicked
+      const newTimeoutId = setTimeout(() => {
+        SpeechRecognition.stopListening(); // Reset speak mode
+      }, 3000); // Adjust the duration (5000 ms = 5 seconds) as needed
+      setTimeoutId(newTimeoutId);
+     // setListening(false);
+     // setTamilListening(false);
 
-    // Set listening to true when the microphone button is clicked
-
-    try {
-      // Send a GET request to the Flask backend for voice input
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/tamil-voice`);
-
-      // If recognized text is returned, update the input state
-      if (response.data.recognized_tamil && response.data.translated_english) {
-        setInputBox(response.data.recognized_tamil);
-        setInput(response.data.translated_english); // Update input state with recognized text
-      } else if (response.data.error) {
-        console.error(response.data.error);
+    };
+    
+    useEffect(() => {
+      const handleTranscript = setTimeout(() => {
+        if (transcript) {
+          if (listeningLanguage === 'ta-IN') {
+            sendTranscriptToBackendTamil(transcript);
+          } else if (listeningLanguage === 'en-US') {
+            sendTranscriptToBackendEnglish(transcript);
+          }
+        }
+      }, 500); // Debounce for 500ms
+    
+      return () => clearTimeout(handleTranscript);
+    }, [transcript, listeningLanguage]);
+    
+    
+    const sendTranscriptToBackendEnglish = async (text) => {
+      try {
+        setListening(true);
+      setIsTamil(false);  // Make sure we're not in Tamil mode
+      setIsSpeak(false);
+        const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/voice`, { text });
+        console.log("ehllo");
+        const data = res.data;
+        if (data.text) {
+          setInputBox(data.text);
+          setInput(data.text);
+          setResponse(data.text);
+        }
+      } catch (error) {
+        console.error('Error sending transcript to backend:', error);
+      } finally {
+        setListening(false);
+        setIsTamil(false); // Ensure to reset Tamil mode
       }
-    } catch (error) {
-      console.error('Error while fetching voice input:', error);
-    } finally {
-      setTamilListening(false);       // Set listening to false after the process is done
-    }
-  };
+    };
+    
+    const sendTranscriptToBackendTamil = async (text) => {
+      try {
+      setTamilListening(true);
+      setIsTamil(true);  // Set Tamil mode
+      setIsSpeak(true);
+        const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/tamil-voice`, { text });
+        console.log("ehllo tamil");
+        const data = res.data;
+        if (data.recognized_tamil && data.translated_english) {
+          setInputBox(data.recognized_tamil);
+          setInput(data.translated_english);
+          setResponse(data.recognized_tamil);
+        }
+      } catch (error) {
+        console.error('Error sending transcript to backend:', error);
+      } finally {
+        setTamilListening(false);
+      }
+    };
+    
+
+  if (!browserSupportsSpeechRecognition) {
+    return <span>Browser doesn't support speech recognition.</span>;
+  }
 
   return (
 <><nav class="fixed bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-700 w-full">
@@ -576,7 +665,7 @@ function App() {
                 />
               <button
                 type="button"
-                onClick={handleSpeech}
+                onClick={startEnglishListening}
                 className="ml-2 rounded-lg w-auto px-3 h-10 flex items-center justify-center  bg-[#3f3f46] text-[#d4d4d8] shadow-lg transition-colors duration-300 ease-in-out"
                 >
 
@@ -586,7 +675,7 @@ function App() {
               
               <button
                 type="button"
-                onClick={handleTamilSpeech}
+                onClick={startTamilListening}
                 className="ml-2 rounded-lg w-auto px-4 h-10 flex items-center justify-center hover:bg-[#94a3b8] bg-[#3f3f46] text-[#d4d4d8] shadow-lg transition-colors duration-300 ease-in-out"
               >
                 <FontAwesomeIcon icon={faMicrophone} color="#d4d4d8" className="mr-2" />

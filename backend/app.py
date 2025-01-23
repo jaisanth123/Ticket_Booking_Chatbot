@@ -2,6 +2,9 @@ from fastapi import FastAPI,Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
+import base64
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 
 from routes.chatbot import Chatbot
 from routes.qr_validate import qr_validate_in, qr_validate_out
@@ -31,7 +34,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 app = FastAPI()
-# Initialize recognizer and FastAPI app
+
 r = sr.Recognizer()
 
 app.add_middleware(
@@ -64,20 +67,20 @@ async def qr_in(request: QRRequest):
 async def qr_out(request: QRRequest):
     return await qr_validate_out(request)
 
-# Function to record audio and recognize speech
-async def recognize_speech(language="en-US"):
-    try:
-        with sr.Microphone() as source:
-            r.adjust_for_ambient_noise(source, duration=0.2)
-            print("Listening...")
-            audio = r.listen(source, timeout=4, phrase_time_limit=3)
-            recognized_text = r.recognize_google(audio, language=language)
-            print(f"Recognized Text: {recognized_text}")
-            return recognized_text
-    except sr.UnknownValueError:
-        raise HTTPException(status_code=400, detail="Unable to recognize speech")
-    except sr.RequestError as e:
-        raise HTTPException(status_code=500, detail=f"API request error: {str(e)}")
+# # Function to record audio and recognize speech
+# async def recognize_speech(language="en-US"):
+#     try:
+#         with sr.Microphone() as source:
+#             r.adjust_for_ambient_noise(source, duration=0.2)
+#             print("Listening...")
+#             audio = r.listen(source, timeout=4, phrase_time_limit=3)
+#             recognized_text = r.recognize_google(audio, language=language)
+#             print(f"Recognized Text: {recognized_text}")
+#             return recognized_text
+#     except sr.UnknownValueError:
+#         raise HTTPException(status_code=400, detail="Unable to recognize speech")
+#     except sr.RequestError as e:
+#         raise HTTPException(status_code=500, detail=f"API request error: {str(e)}")
 
 # Function to translate text
 async def translate_text(text, source_lang="ta", target_lang="en"):
@@ -87,22 +90,30 @@ async def translate_text(text, source_lang="ta", target_lang="en"):
         return translated
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Translation error: {str(e)}")
+
+
 # Endpoint for voice input in English
-@app.get("/voice")
-async def get_voice_input():
+@app.post("/voice")
+async def get_voice_input(request: Request):
     try:
-        recognized_text = await recognize_speech(language="en-US")
+        body = await request.json()
+        recognized_text = body.get("text")
+        if not recognized_text:
+            raise HTTPException(status_code=400, detail="No text provided")
         return JSONResponse(content={"text": recognized_text})
     except HTTPException as e:
         raise e
 
 # Endpoint for Tamil voice input and translation to English
-@app.get("/tamil-voice")
-async def tamil_voice_to_english():
+
+@app.post("/tamil-voice")
+async def tamil_voice_to_english(request: Request):
     try:
-        # Step 1: Capture Tamil speech input
-        recognized_tamil = await recognize_speech(language="ta-IN")
-        # Step 2: Translate Tamil text to English
+        body = await request.json()
+        recognized_tamil = body.get("text")
+        if not recognized_tamil:
+            raise HTTPException(status_code=400, detail="No Tamil text provided")
+        # Here, you would include your translation logic
         translated_english = await translate_text(recognized_tamil, source_lang="ta", target_lang="en")
         return JSONResponse(content={
             "recognized_tamil": recognized_tamil,
@@ -125,6 +136,7 @@ async def translate_to_tamil(text: str, source_lang="en", target_lang="ta"):
 async def translate_to_tamil_endpoint(input_text: str):
     try:
         translated_text = await translate_to_tamil(input_text)
+        print(f"Translated Text: {translated_text}")
         return {"translated_tamil": translated_text}
     except Exception as e:
         return {"error": str(e)}
@@ -148,29 +160,16 @@ async def speak_text(text, language="en"):
 
 
 @app.post("/speak")
-async def speak(text: str = Form(...), lang: str = Form("ta")):
-    """
-    Generate and play an audio file from the given text using gTTS.
-    
-    - `text`: The text to convert to speech.
-    - `lang`: The language code (default is Tamil).
-    """    
+async def speak(text: str = Form(...), lang: str = Form("en")):
     try:
-        # Generate a unique filename
-        filename = f"{uuid.uuid4()}.mp3"
-
-        # Use gTTS to generate the audio
         tts = gTTS(text=text, lang=lang)
+        filename = f"audio/{uuid.uuid4()}.mp3"
         tts.save(filename)
-
-        # Play the audio file
-        playsound(filename)
-
-        # Return a success message to the frontend
-        return {"status": "Audio played successfully!"}
+        # Read the file content and encode it to base64
+        with open(filename, "rb") as audio_file:
+            audio_content = audio_file.read()
+        audio_base64 = base64.b64encode(audio_content).decode('utf-8')
+        os.remove(filename)
+        return JSONResponse(content={"audio": audio_base64})
     except Exception as e:
-        return {"error": str(e)}
-    finally:
-        # Cleanup: Remove the file after playing
-        if os.path.exists(filename):
-            os.remove(filename)
+        return JSONResponse(content={"error": str(e)}, status_code=500)

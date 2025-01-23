@@ -57,7 +57,7 @@ const InPage = () => {
     
     )}
       {failure && (<div><div className='p-4 ml-10 text-5xl font-bold text-red-800'>Failure</div>
-    <div className='p-8 ml-10 text-2xl font-bold text-red-800'>limit reached</div></div>
+    <div className='p-8 ml-10 text-2xl font-bold text-red-800 '>limit reached</div></div>
     )}
     </div>
   );
