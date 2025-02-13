@@ -10,9 +10,12 @@ const HeroSection = ({ backgroundImage }) => {
       }}
     >
       <div className="max-w-screen-xl px-4 py-24 mx-auto text-center lg:py-56">
-        <h1 className="mt-24 text-4xl font-extrabold leading-none tracking-tight mb-96 text-amber-500 md:text-5xl lg:text-6xl">
+        {/* <h1 className="mt-24 text-4xl font-extrabold leading-none tracking-tight mb-96 text-amber-500 md:text-5xl lg:text-6xl">
         From Our Farm to Your Bag – Discover Freshness Redefined!
-        </h1>
+        </h1> */}
+              <h1 class="mb-96 text-4xl font-extrabold tracking-tight leading-none text-amber-500 md:text-5xl lg:text-6xl mt-24">
+          Experience the Power of Live Music !!
+          </h1>
         <div className="flex flex-col space-y-4 sm:flex-row sm:justify-center sm:space-y-0">
           <a
             href="#"
