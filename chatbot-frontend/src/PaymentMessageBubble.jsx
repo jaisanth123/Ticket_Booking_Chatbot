@@ -1,5 +1,6 @@
 import React from 'react';
 import axios from 'axios';
+import razor from './assets/razor.jpeg'
 
 const PaymentMessageBubble = ({ order_id, setMessages }) => {
   const handlePayment = () => {
